@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { FileText, Settings, Folder, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import { getNotes, saveNotes } from "../services/notes";
+import { getDesktop, saveDesktop } from "../services/desktop";
 import "../styles/desktop.css";
 
 export default function Desktop() {
@@ -27,12 +29,29 @@ export default function Desktop() {
     localStorage.setItem("devos_windows", JSON.stringify(windows));
   }, [windows]);
 
-  useEffect(() => {
-    localStorage.setItem("devos_config", JSON.stringify(desktopConfig));
-  }, [desktopConfig]);
 useEffect(() => {
-  localStorage.setItem("devos_notes", JSON.stringify(notes));
-}, [notes]);
+  const load = async () => {
+    try {
+      const data = await getDesktop();
+      if (data) setDesktopConfig(data);
+    } catch {}
+  };
+  load();
+}, []);
+useEffect(() => {
+  saveDesktop(desktopConfig);
+}, [desktopConfig]);
+useEffect(() => {
+  const load = async () => {
+    try {
+      const data = await getNotes();
+      setNotes(data);
+    } catch (err) {
+      console.log("Not logged in yet");
+    }
+  };
+  load();
+}, []);
   const apps = [
     { id: "notes", name: "Notes", icon: <FileText size={28} /> },
     { id: "settings", name: "Settings", icon: <Settings size={28} /> },
@@ -205,9 +224,11 @@ useEffect(() => {
   <div className="notes-app">
     <textarea
       value={notes.content}
-      onChange={(e) =>
-        setNotes({ content: e.target.value })
-      }
+      onChange={(e) => {
+  const newContent = e.target.value;
+  setNotes({ content: newContent });
+  saveNotes(newContent);
+}}
       placeholder="Start typing..."
       className="notes-textarea"
     />
