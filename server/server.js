@@ -10,7 +10,8 @@ const app = express();
 
 app.use(cors({
   origin: "*", // for now (we’ll restrict later)
-}));;
+}));
+        
 app.use(express.json());
 
 
