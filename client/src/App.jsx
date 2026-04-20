@@ -1,17 +1,15 @@
 import { useState } from "react";
-import Desktop from "./pages/Desktop";
-import Login from "./pages/Login";
+import Desktop from "./pages/Desktop.jsx";
+import Login from "./pages/Login.jsx";
 
-function App() {
-  const [loggedIn, setLoggedIn] = useState(
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("token")
   );
 
-  return loggedIn ? (
+  return isLoggedIn ? (
     <Desktop />
   ) : (
-    <Login onLogin={() => setLoggedIn(true)} />
+    <Login onLogin={() => setIsLoggedIn(true)} />
   );
 }
-
-export default App;
