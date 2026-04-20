@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Desktop from "./pages/Desktop.jsx";
-import Login from "./pages/Login.jsx";
+import Desktop from "./pages/Desktop";
+import Login from "./pages/Login";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -8,7 +8,7 @@ export default function App() {
   );
 
   return isLoggedIn ? (
-    <Desktop />
+    <Desktop onLogout={() => setIsLoggedIn(false)} />
   ) : (
     <Login onLogin={() => setIsLoggedIn(true)} />
   );

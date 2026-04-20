@@ -1,5 +1,9 @@
+import notesIcon from  "../assets/reminder-ios.png";
+import settingsIcon from '../assets/setting-ios.png';
+import filesIcon from '../assets/files-ios.png';
+import aboutIcon from '../assets/contact-ios.png';
 import { useState, useEffect } from "react";
-import { FileText, Settings, Folder, Info } from "lucide-react";
+import { FileText, Settings, Folder, Info, SettingsIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { getNotes, saveNotes } from "../services/notes";
 import { getDesktop, saveDesktop } from "../services/desktop";
@@ -32,7 +36,13 @@ useEffect(() => {
   load();
 }, []);
 useEffect(() => {
-  saveDesktop(desktopConfig);
+  if (!desktopConfig) return;
+
+  const timer = setTimeout(() => {
+    saveDesktop(desktopConfig);
+  }, 500);
+
+  return () => clearTimeout(timer);
 }, [desktopConfig]);
 useEffect(() => {
   const load = async () => {
@@ -49,10 +59,10 @@ useEffect(() => {
   localStorage.setItem("devos_notes", JSON.stringify(notes));
 }, [notes]);
   const apps = [
-    { id: "notes", name: "Notes", icon: <FileText size={28} /> },
-    { id: "settings", name: "Settings", icon: <Settings size={28} /> },
-    { id: "explorer", name: "Files", icon: <Folder size={28} /> },
-    { id: "about", name: "About", icon: <Info size={28} /> }
+    { id: "notes", name: "Notes", icon: notesIcon},
+    { id: "settings", name: "Settings", icon: settingsIcon },
+    { id: "files", name: "Files", icon: filesIcon },
+    { id: "about", name: "About", icon: aboutIcon }
   ];
 
   // OPEN APP
@@ -125,29 +135,27 @@ useEffect(() => {
   return (
     <div
       className="desktop"
-     style={{
+      style={{
   background:
-    desktopConfig.wallpaper === "default"
+    !desktopConfig.wallpaper || desktopConfig.wallpaper === "default"
       ? "radial-gradient(circle at top, #1e293b, #0f172a)"
-      : `url(${desktopConfig.wallpaper})`,
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundRepeat: "no-repeat"
+      : `url(${desktopConfig.wallpaper}) center/cover no-repeat`
 }}
+  
     >
       {/* ICONS (YOU WERE MISSING THIS) */}
       <div className="icon-grid">
-        {apps.map((app) => (
-          <div
-            key={app.id}
-            className="icon"
-            onDoubleClick={() => openApp(app)}
-          >
-            {app.icon}
-            <div className="icon-label">{app.name}</div>
-          </div>
-        ))}
-      </div>
+  {apps.map((app) => (
+    <div
+      key={app.id}
+      className="icon"
+      onDoubleClick={() => openApp(app)}
+    >
+      <img src={app.icon} className="icon-img" />
+      
+    </div>
+  ))}
+</div>
 
       {/* WINDOWS */}
       {windows.map((win) => {
@@ -261,35 +269,35 @@ useEffect(() => {
           </motion.div>
         );
       })}
-      <div className="taskbar">
-  <div className="taskbar-left">DevOS</div>
+   <div className="dock">
+  {windows.map((win) => {
+    const getAppIcon = (name) => {
+  const app = apps.find((a) => a.name === name);
+  return app?.icon;
+};
 
-  <div className="taskbar-center">
-    {windows.map((win) => {
-      const maxZ = Math.max(0, ...windows.map((w) => w.z));
-      const isActive = win.z === maxZ;
+    return (
+      <div
+        key={win.id}
+        className="dock-item"
+        onClick={() => bringToFront(win.id)}
+      >
+        <img src={getAppIcon(win.name)} alt={win.name} />
+      </div>
+    );
+  })}
 
-      // map window name → icon
-      const iconMap = {
-        Notes: <FileText size={18} />,
-        Settings: <Settings size={18} />,
-        Files: <Folder size={18} />,
-        About: <Info size={18} />
-      };
+  <div className="dock-divider" />
 
-      return (
-        <div
-          key={win.id}
-          className={`taskbar-item ${isActive ? "active" : ""}`}
-          onClick={() => bringToFront(win.id)}
-        >
-          {iconMap[win.name]}
-        </div>
-      );
-    })}
+  <div
+    className="dock-item"
+    onClick={() => {
+      localStorage.removeItem("token");
+      window.location.reload();
+    }}
+  >
+    🔓
   </div>
-
-  <div className="taskbar-right"></div>
 </div>
     </div>
   );
