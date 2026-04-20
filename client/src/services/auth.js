@@ -1,7 +1,7 @@
 // src/services/auth.js
 import axios from "axios";
 
-const API = "http://localhost:5000/api/auth";
+const API = "https://dev-os.onrender.com/api/auth";
 
 // SIGNUP
 export const signup = async (data) => {
