@@ -6,10 +6,7 @@ import { getDesktop, saveDesktop } from "../services/desktop";
 import "../styles/desktop.css";
 
 export default function Desktop() {
-  const [windows, setWindows] = useState(() => {
-    const saved = localStorage.getItem("devos_windows");
-    return saved ? JSON.parse(saved) : [];
-  });
+const [windows, setWindows] = useState([]);
 
   const [desktopConfig, setDesktopConfig] = useState(() => {
     const saved = localStorage.getItem("devos_config");
@@ -24,10 +21,6 @@ export default function Desktop() {
   const saved = localStorage.getItem("devos_notes");
   return saved ? JSON.parse(saved) : { content: "" };
 });
-
-  useEffect(() => {
-    localStorage.setItem("devos_windows", JSON.stringify(windows));
-  }, [windows]);
 
 useEffect(() => {
   const load = async () => {
@@ -52,6 +45,9 @@ useEffect(() => {
   };
   load();
 }, []);
+useEffect(() => {
+  localStorage.setItem("devos_notes", JSON.stringify(notes));
+}, [notes]);
   const apps = [
     { id: "notes", name: "Notes", icon: <FileText size={28} /> },
     { id: "settings", name: "Settings", icon: <Settings size={28} /> },
@@ -105,8 +101,8 @@ useEffect(() => {
           w.id === id
             ? {
                 ...w,
-                x: e.clientX - offsetX,
-                y: e.clientY - offsetY
+                x: Math.max(0, Math.min(window.innerWidth - 400, e.clientX - offsetX)),
+                y: Math.max(0, Math.min(window.innerHeight - 300, e.clientY - offsetY))
               }
             : w
         )
@@ -129,12 +125,15 @@ useEffect(() => {
   return (
     <div
       className="desktop"
-      style={{
-        background:
-          desktopConfig.wallpaper === "default"
-            ? "radial-gradient(circle at top, #1e293b, #0f172a)"
-            : `url(${desktopConfig.wallpaper}) center/cover no-repeat`
-      }}
+     style={{
+  background:
+    desktopConfig.wallpaper === "default"
+      ? "radial-gradient(circle at top, #1e293b, #0f172a)"
+      : `url(${desktopConfig.wallpaper})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat"
+}}
     >
       {/* ICONS (YOU WERE MISSING THIS) */}
       <div className="icon-grid">
@@ -206,17 +205,17 @@ useEffect(() => {
                     Default Gradient
                   </button>
 
-                  <button
-                    onClick={() =>
-                      setDesktopConfig((prev) => ({
-                        ...prev,
-                        wallpaper:
-                          "https://images.unsplash.com/photo-1506744038136-46273834b3fb"
-                      }))
-                    }
-                  >
-                    Nature Wallpaper
-                  </button>
+                  <input
+  type="text"
+  placeholder="Paste image URL..."
+  className="wallpaper-input"
+  onChange={(e) =>
+    setDesktopConfig((prev) => ({
+      ...prev,
+      wallpaper: e.target.value
+    }))
+  }
+/>
                 </div>
               )}
 
@@ -225,16 +224,25 @@ useEffect(() => {
     <textarea
       value={notes.content}
       onChange={(e) => {
-  const newContent = e.target.value;
-  setNotes({ content: newContent });
-  saveNotes(newContent);
-}}
+        const newContent = e.target.value;
+
+        // instant UI update
+        setNotes({ content: newContent });
+
+        // local backup (fast + reliable)
+        localStorage.setItem(
+          "devos_notes",
+          JSON.stringify({ content: newContent })
+        );
+
+        // backend (non-blocking)
+        saveNotes(newContent);
+      }}
       placeholder="Start typing..."
       className="notes-textarea"
     />
   </div>
 )}
-
               {win.name === "Files" && (
                 <div>
                   📁 Documents<br />
@@ -253,6 +261,36 @@ useEffect(() => {
           </motion.div>
         );
       })}
+      <div className="taskbar">
+  <div className="taskbar-left">DevOS</div>
+
+  <div className="taskbar-center">
+    {windows.map((win) => {
+      const maxZ = Math.max(0, ...windows.map((w) => w.z));
+      const isActive = win.z === maxZ;
+
+      // map window name → icon
+      const iconMap = {
+        Notes: <FileText size={18} />,
+        Settings: <Settings size={18} />,
+        Files: <Folder size={18} />,
+        About: <Info size={18} />
+      };
+
+      return (
+        <div
+          key={win.id}
+          className={`taskbar-item ${isActive ? "active" : ""}`}
+          onClick={() => bringToFront(win.id)}
+        >
+          {iconMap[win.name]}
+        </div>
+      );
+    })}
+  </div>
+
+  <div className="taskbar-right"></div>
+</div>
     </div>
   );
 }

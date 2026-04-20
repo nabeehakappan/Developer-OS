@@ -20,20 +20,33 @@ export default function Login({ onLogin }) {
       placeholder="Password"
       onChange={(e) => setPassword(e.target.value)}
     />
-
-    <button onClick={async () => {
-      await login({ username, password });
-      onLogin();
-    }}>
-      Login
-    </button>
-
     <button
-      className="secondary"
-      onClick={() => signup({ username, password })}
-    >
-      Signup
-    </button>
+  onClick={async () => {
+    try {
+      await login({ username, password });
+      onLogin(); // only after success
+    } catch (err) {
+      alert("Login failed");
+    }
+  }}>
+  Login
+</button>
+
+   
+
+  <button
+  className="secondary"
+  onClick={async () => {
+    try {
+      await signup({ username, password });
+      alert("Account created! Now login.");
+    } catch {
+      alert("Signup failed");
+    }
+  }}
+>
+  Signup
+</button>
   </div>
 </div>
   );
